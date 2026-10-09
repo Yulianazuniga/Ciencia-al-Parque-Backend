@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Estadísticas en tiempo real</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      :root { color-scheme: dark; }
+      body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 2rem; }
+      h1 { font-size: 1.4rem; }
+      .login { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+      input { padding: .5rem; border-radius: .4rem; border: 1px solid #334155; background: #1e293b; color: inherit; }
+      button { padding: .5rem 1rem; border: 0; border-radius: .4rem; background: #38bdf8; color: #0f172a; font-weight: 700; cursor: pointer; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+      .card { background: #1e293b; border: 1px solid #334155; border-radius: .75rem; padding: 1rem; }
+      .card span { display: block; font-size: 2rem; font-weight: 800; }
+      .card small { color: #94a3b8; }
+      ul { list-style: none; padding: 0; }
+      li { padding: .25rem 0; border-bottom: 1px solid #1e293b; }
+      #estado { color: #94a3b8; font-size: .85rem; margin-left: .5rem; }
+      pre { background: #020617; padding: 1rem; border-radius: .5rem; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>Estadísticas en tiempo real <small id="estado">desconectado</small></h1>
+
+    <div class="login">
+      <input id="email" placeholder="email" value="admin@evento.local" />
+      <input id="password" type="password" placeholder="password" value="Cambiar123*" />
+      <button id="conectar">Conectar</button>
+    </div>
+
+    <div class="grid">
+      <div class="card"><small>Asistentes únicos</small><span id="unicos">0</span></div>
+      <div class="card"><small>Total asistencias</small><span id="total">0</span></div>
+      <div class="card"><small>Nuevos</small><span id="nuevos">0</span></div>
+      <div class="card"><small>Recurrentes</small><span id="recurrentes">0</span></div>
+      <div class="card"><small>Jornada actual</small><span id="jornadaActual">0</span></div>
+    </div>
+
+    <h3>Por día</h3>
+    <ul id="porDia"></ul>
+    <h3>Por jornada</h3>
+    <ul id="porJornada"></ul>
+    <h3>Últimas horas</h3>
+    <ul id="ultimaHora"></ul>
+    <h3>Ganadores</h3>
+    <pre id="ganador">—</pre>
+
+    <script>
+      const estado = document.getElementById("estado");
+      let socket;
+
+      const pintar = (data) => {
+        document.getElementById("unicos").textContent = data.asistentesUnicos;
+        document.getElementById("total").textContent = data.totalAsistencias;
+        document.getElementById("nuevos").textContent = data.nuevos;
+        document.getElementById("recurrentes").textContent = data.recurrentes;
+        document.getElementById("jornadaActual").textContent = data.jornadaActual.total;
+        const lista = (id, items, fmt) =>
+          (document.getElementById(id).innerHTML = items.map((i) => `<li>${fmt(i)}</li>`).join(""));
+        lista("porDia", data.porDia, (i) => `${i.fecha}: ${i.total}`);
+        lista("porJornada", data.porJornada, (i) => `${i.clave}: ${i.total}`);
+        lista("ultimaHora", data.ultimaHora, (i) => `${i.hora}: ${i.total}`);
+      };
+
+      document.getElementById("conectar").onclick = async () => {
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: document.getElementById("email").value,
+              password: document.getElementById("password").value
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message);
+
+          if (socket) socket.disconnect();
+          socket = io("/stats", { auth: { token: data.accessToken } });
+
+          socket.on("connect", () => (estado.textContent = "conectado"));
+          socket.on("disconnect", () => (estado.textContent = "desconectado"));
+          socket.on("connect_error", (err) => (estado.textContent = `error: ${err.message}`));
+          socket.on("stats:snapshot", pintar);
+          socket.on("stats:update", pintar);
+          socket.on("sorteo:ganador", (ganador) => {
+            document.getElementById("ganador").textContent = JSON.stringify(ganador, null, 2);
+          });
+        } catch (error) {
+          alert(error.message);
+        }
+      };
+    </script>
+  </body>
+</html>
