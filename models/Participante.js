@@ -10,6 +10,8 @@ export const GENEROS = [
 
 export const LUGARES_EVENTO = ["Timbío", "Santander de Quilichao", "Popayán"];
 
+export const OPCIONES_PROCEDENCIA = ["Institución", "Colegio", "Universidad","Ciudadano", "Otro"];
+
 const participanteSchema = new mongoose.Schema(
   {
     documento: {
@@ -32,12 +34,25 @@ const participanteSchema = new mongoose.Schema(
       required: true,
       match: [/^3\d{9}$/, "telefono must be a 10 digit colombian cellphone"]
     },
-    procedencia: {
+    procedenciaTipo: {
       type: String,
       required: true,
-      minlength: 2,
+      enum: OPCIONES_PROCEDENCIA
+    },
+    procedenciaDetalle: {
+      type: String,
       maxlength: 200,
-      trim: true
+      trim: true,
+      validate: {
+        validator: function (value) {
+          // Solo obligatorio si procedenciaTipo es "Otro"
+          if (this.procedenciaTipo === "Otro") {
+            return value && value.length > 0;
+          }
+          return true;
+        },
+        message: "Debe especificar procedencia si selecciona 'Otro'"
+      }
     },
     lugarEvento: { type: String, required: true, enum: LUGARES_EVENTO },
     calificacion: { type: Number, required: true, min: 1, max: 5 },

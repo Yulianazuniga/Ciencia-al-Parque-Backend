@@ -17,6 +17,12 @@ export const registrar = async (req, res) => {
         .status(409)
         .json({ message: "Ya existe una asistencia para este documento en esta jornada" });
     }
+       if (error.message === "PROCEDENCIA_DETALLE_REQUERIDO") {
+      return res.status(422).json({
+        message: "Debe especificar procedencia si selecciona 'Otro'",
+        code: "PROCEDENCIA_DETALLE_REQUERIDO"
+      });
+    }
     if (error.message === "REQUIERE_REGISTRO_COMPLETO") {
       return res.status(422).json({
         message: "Se requiere el registro completo del participante",
@@ -24,9 +30,11 @@ export const registrar = async (req, res) => {
         camposFaltantes: error.camposFaltantes
       });
     }
+ 
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const getAll = async (req, res) => {
   try {

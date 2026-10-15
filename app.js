@@ -29,6 +29,10 @@ app.use(express.static("public"));
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+//swagger con toda la informacion//
+app.get("/swagger.json", (_req, res) => res.json(swaggerSpec));
+
+
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 app.use("/api/auth", authRouter);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Participante, GENEROS, LUGARES_EVENTO } from "../../models/Participante.js";
+import { Participante, GENEROS, LUGARES_EVENTO, OPCIONES_PROCEDENCIA } from "../../models/Participante.js";
 import { Asistencia } from "../../models/Asistencia.js";
 import { appEvents, EVENTOS } from "../../libs/events.js";
 import { jornadaVigente } from "../../utils/tiempo.js";
@@ -7,12 +7,14 @@ import { obtenerOCrearJornada } from "../../jornadas/services/jornadas.service.j
 import { toCsv } from "../../utils/csv.js";
 
 export const participanteSchema = z.object({
+  //--email: z.string().email("Debe ser un correo válido"),--//
   documento: z.string().regex(/^\d{5,12}$/, "documento debe tener de 5 a 12 dígitos"),
   nombreCompleto: z.string().min(3).max(120),
   edad: z.coerce.number().int().min(1).max(120),
   genero: z.enum(GENEROS),
   telefono: z.string().regex(/^3\d{9}$/, "telefono debe ser un celular colombiano de 10 dígitos"),
-  procedencia: z.string().min(2).max(200),
+  procedenciaTipo: z.enum(OPCIONES_PROCEDENCIA),
+  procedenciaDetalle: z.string().min(3).max(120),
   lugarEvento: z.enum(LUGARES_EVENTO),
   calificacion: z.coerce.number().int().min(1).max(5),
   destacado: z.string().max(500).optional().default(""),
@@ -40,7 +42,7 @@ const CAMPOS_DATOS = [
   "edad",
   "genero",
   "telefono",
-  "procedencia",
+  "procedenciaTipo",
   "lugarEvento",
   "calificacion",
   "destacado"
@@ -51,14 +53,14 @@ const CAMPOS_REQUERIDOS = [
   "edad",
   "genero",
   "telefono",
-  "procedencia",
+  "procedenciaTipo",
   "lugarEvento",
   "calificacion",
   "aceptaTratamientoDatos"
 ];
 
 const snapshot = (origen) =>
-  Object.fromEntries(CAMPOS_DATOS.map((campo) => [campo, origen[campo]]));
+  Object.fromEntries(CAMPOS_DATOS.map((campo) => [campo, origen[campo]]));1
 
 const esDuplicado = (error) => error?.code === 11000;
 
@@ -110,6 +112,10 @@ export const registrar = async (body) => {
       mensaje: "Asistencia registrada",
       participante: snapshot(participante)
     };
+  }
+  if (body.procedenciaTipo === "Otro" && (!body.procedenciaDetalle || body.procedenciaDetalle.trim() === "")) {
+    const error = new Error("PROCEDENCIA_DETALLE_REQUERIDO");
+    throw error;
   }
 
   const faltantes = CAMPOS_REQUERIDOS.filter(
