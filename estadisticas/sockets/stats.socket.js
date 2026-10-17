@@ -2,7 +2,7 @@ import { verifyAccessToken } from "../../libs/jwt.js";
 import { appEvents, EVENTOS } from "../../libs/events.js";
 import { getSnapshot } from "../services/estadisticas.service.js";
 
-const DEBOUNCE_MS = 500;
+const DEBOUNCE_MS = 250;
 
 let namespace = null;
 let timer = null;

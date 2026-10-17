@@ -52,13 +52,14 @@
       const estado = document.getElementById("estado");
       let socket;
 
-      const pintar = (data) => {
-        document.getElementById("unicos").textContent = data.asistentesUnicos;
-        document.getElementById("total").textContent = data.totalAsistencias;
-        document.getElementById("nuevos").textContent = data.nuevos;
-        document.getElementById("recurrentes").textContent = data.recurrentes;
-        document.getElementById("jornadaActual").textContent = data.jornadaActual.total;
-        const lista = (id, items, fmt) =>
+      const pintar = (data = {}) => {
+        const jornada = data.jornadaActual ?? { total: 0 };
+        document.getElementById("unicos").textContent = data.asistentesUnicos ?? 0;
+        document.getElementById("total").textContent = data.totalAsistencias ?? 0;
+        document.getElementById("nuevos").textContent = data.nuevos ?? 0;
+        document.getElementById("recurrentes").textContent = data.recurrentes ?? 0;
+        document.getElementById("jornadaActual").textContent = jornada.total ?? 0;
+        const lista = (id, items = [], fmt) =>
           (document.getElementById(id).innerHTML = items.map((i) => `<li>${fmt(i)}</li>`).join(""));
         lista("porDia", data.porDia, (i) => `${i.fecha}: ${i.total}`);
         lista("porJornada", data.porJornada, (i) => `${i.clave}: ${i.total}`);

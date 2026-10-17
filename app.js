@@ -29,10 +29,26 @@ app.use(express.static("public"));
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-//swagger con toda la informacion//
+/**
+ * @openapi
+ * /swagger.json:
+ *   get:
+ *     tags: [General]
+ *     summary: Especificación OpenAPI completa en formato JSON
+ *     responses:
+ *       200: { description: Documento OpenAPI 3.0.3 }
+ */
 app.get("/swagger.json", (_req, res) => res.json(swaggerSpec));
 
-
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     tags: [General]
+ *     summary: Verifica que el servicio esté en línea
+ *     responses:
+ *       200: { description: Servicio activo }
+ */
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 app.use("/api/auth", authRouter);

@@ -30,7 +30,8 @@ const registrarAsistencia = async () => {
       edad: 30,
       genero: "Otro",
       telefono: "3104567890",
-      procedencia: "Prueba",
+      procedenciaTipo: "Ciudadano",
+      procedenciaDetalle: "Prueba Socket",
       lugarEvento: "Popayán",
       calificacion: 2,
       aceptaTratamientoDatos: true

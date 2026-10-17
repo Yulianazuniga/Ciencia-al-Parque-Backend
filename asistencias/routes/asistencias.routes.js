@@ -42,6 +42,7 @@ router.post("/verificar", asistenciaLimiter, validate(verificarSchema), controll
  *     description: >
  *       Si el documento existe, clona sus datos. Si no existe y faltan datos,
  *       responde 422 con code REQUIERE_REGISTRO_COMPLETO.
+ *       Si procedenciaTipo es "Otro", procedenciaDetalle es obligatorio.
  *     requestBody:
  *       required: true
  *       content:
@@ -53,17 +54,29 @@ router.post("/verificar", asistenciaLimiter, validate(verificarSchema), controll
  *               documento: { type: string }
  *               nombreCompleto: { type: string }
  *               edad: { type: integer }
- *               genero: { type: string }
- *               telefono: { type: string }
- *               procedencia: { type: string }
- *               lugarEvento: { type: string }
- *               calificacion: { type: integer }
- *               destacado: { type: string }
+ *               genero:
+ *                 type: string
+ *                 enum: [Masculino, Femenino, No binario, Otro, Prefiero no decirlo]
+ *               telefono: { type: string, example: "3001234567" }
+ *               procedenciaTipo:
+ *                 type: string
+ *                 enum: [Institución, Colegio, Universidad, Ciudadano, Otro]
+ *               procedenciaDetalle:
+ *                 type: string
+ *                 description: Obligatorio (mín. 3 caracteres) cuando procedenciaTipo es "Otro"
+ *               lugarEvento:
+ *                 type: string
+ *                 enum: [Timbío, Santander de Quilichao, Popayán]
+ *               calificacion: { type: integer, minimum: 1, maximum: 5 }
+ *               destacado: { type: string, maxLength: 500 }
  *               aceptaTratamientoDatos: { type: boolean }
  *     responses:
  *       201: { description: Asistencia registrada }
  *       409: { description: Ya existe asistencia en esa jornada }
- *       422: { description: Requiere registro completo }
+ *       422:
+ *         description: >
+ *           Requiere registro completo (code REQUIERE_REGISTRO_COMPLETO) o
+ *           falta procedenciaDetalle al elegir "Otro" (code PROCEDENCIA_DETALLE_REQUERIDO)
  */
 router.post(
   "/",

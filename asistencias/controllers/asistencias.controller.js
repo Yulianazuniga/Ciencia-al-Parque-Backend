@@ -10,7 +10,10 @@ export const verificar = async (req, res) => {
 
 export const registrar = async (req, res) => {
   try {
-    res.status(201).json(await service.registrar(req.body));
+    // La actualización del dashboard la emite stats.socket.js vía
+    // appEvents (ASISTENCIA_REGISTRADA) → snapshot completo por socket.io.
+    const asistencia = await service.registrar(req.body);
+    res.status(201).json({ asistencia });
   } catch (error) {
     if (error.message === "DUPLICADO") {
       return res

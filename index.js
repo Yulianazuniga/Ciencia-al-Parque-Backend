@@ -7,13 +7,14 @@ import { registerStatsSocket } from "./estadisticas/sockets/stats.socket.js";
 import { FRONTEND_DEV_URL, FRONTEND_STG_URL, FRONTEND_PROD_URL } from "./config/token.js";
 
 const origenes = [FRONTEND_DEV_URL, FRONTEND_STG_URL, FRONTEND_PROD_URL].filter(Boolean);
+let io;
 
 async function main() {
   try {
     await connectDB();
 
     const httpServer = createServer(app);
-    const io = new Server(httpServer, {
+     io = new Server(httpServer, {
       cors: { origin: origenes.length ? origenes : true, credentials: true }
     });
 

@@ -60,7 +60,7 @@ const CAMPOS_REQUERIDOS = [
 ];
 
 const snapshot = (origen) =>
-  Object.fromEntries(CAMPOS_DATOS.map((campo) => [campo, origen[campo]]));1
+  Object.fromEntries(CAMPOS_DATOS.map((campo) => [campo, origen[campo]]));
 
 const esDuplicado = (error) => error?.code === 11000;
 
