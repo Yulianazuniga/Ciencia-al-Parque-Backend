@@ -7,3 +7,4 @@ coverage/
 dist/
 .vercel/
 .DS_Store
+yarn.lock

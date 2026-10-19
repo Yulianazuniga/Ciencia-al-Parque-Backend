@@ -22,8 +22,34 @@ export const getSnapshot = async () => {
               total: { $sum: 1 },
               primeraVez: { $sum: { $cond: ["$primeraVez", 1, 0] } }
             }
+          }
+        ],
+        porLugar: [
+          { $match: { "datos.lugarEvento": { $type: "string", $ne: "" } } },
+          {
+            $group: {
+              _id: "$datos.lugarEvento",
+              total: { $sum: 1 }
+            }
           },
-          { $sort: { "_id.fecha": 1, "_id.turno": 1 } }
+          { $sort: { total: -1 } }
+        ],
+        calificacion: [
+          {
+            $match: {
+              "datos.calificacion": {
+                $gte: 1,
+                $lte: 5
+              }
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              promedio: { $avg: "$datos.calificacion" },
+              votos: { $sum: 1 }
+            }
+          }
         ],
         porDia: [
           { $group: { _id: "$fecha", total: { $sum: 1 } } },
@@ -72,15 +98,24 @@ export const getSnapshot = async () => {
 
   const totalAsistencias = contar(data.total);
   const totalPrimeraVez = contar(data.primeraVez);
+  const calificacion = data.calificacion?.[0];
 
   return {
     jornadaActual,
     porJornada: porJornada.map(({ clave, total }) => ({ clave, total })),
     porDia: (data.porDia || []).map((item) => ({ fecha: item._id, total: item.total })),
+    porLugar: (data.porLugar || []).map((item) => ({
+      lugar: item._id,
+      total: item.total
+    })),
     asistentesUnicos: contar(data.unicos),
     totalAsistencias,
     nuevos: totalPrimeraVez,
     recurrentes: totalAsistencias - totalPrimeraVez,
+    calificacionPromedio: calificacion
+      ? Math.round(calificacion.promedio * 10) / 10
+      : 0,
+    calificacionVotos: calificacion ? calificacion.votos : 0,
     ultimaHora: (data.ultimaHora || []).map((item) => ({ hora: item._id, total: item.total })),
     actualizadoEn: new Date().toISOString()
   };
