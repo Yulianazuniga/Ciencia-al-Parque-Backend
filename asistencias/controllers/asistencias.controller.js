@@ -39,6 +39,8 @@ export const registrar = async (req, res) => {
 };
 
 
+
+
 export const getAll = async (req, res) => {
   try {
     const resultado = await service.getAll({

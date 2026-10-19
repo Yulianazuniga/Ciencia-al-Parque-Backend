@@ -51,6 +51,16 @@ export const getSnapshot = async () => {
             }
           }
         ],
+        porMunicipio: [
+          { $match: { "datos.municipio": { $type: "string", $ne: "" } } },
+          {
+            $group: {
+              _id: "$datos.municipio",
+              total: { $sum: 1 }
+            }
+          },
+          { $sort: { total: -1 } }
+        ],
         porDia: [
           { $group: { _id: "$fecha", total: { $sum: 1 } } },
           { $sort: { _id: 1 } }
@@ -106,6 +116,10 @@ export const getSnapshot = async () => {
     porDia: (data.porDia || []).map((item) => ({ fecha: item._id, total: item.total })),
     porLugar: (data.porLugar || []).map((item) => ({
       lugar: item._id,
+      total: item.total
+    })),
+    porMunicipio: (data.porMunicipio || []).map((item) => ({
+      municipio: item._id,
       total: item.total
     })),
     asistentesUnicos: contar(data.unicos),

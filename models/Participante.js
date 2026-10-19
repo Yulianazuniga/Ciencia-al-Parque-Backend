@@ -10,7 +10,7 @@ export const GENEROS = [
 
 export const LUGARES_EVENTO = ["Timbío", "Santander de Quilichao", "Popayán"];
 
-export const OPCIONES_PROCEDENCIA = ["Institución", "Colegio", "Universidad","Ciudadano", "Otro"];
+export const OPCIONES_PROCEDENCIA = ["Institución / Gobierno","SENA", "Colegio", "Universidad","Ciudadano", "Otro"];
 
 const participanteSchema = new mongoose.Schema(
   {
@@ -33,6 +33,15 @@ const participanteSchema = new mongoose.Schema(
       type: String,
       required: true,
       match: [/^3\d{9}$/, "telefono must be a 10 digit colombian cellphone"]
+    },
+
+    municipio:{
+      type: String,
+    required: true,
+    trim: true,
+    maxlength: 100
+  
+
     },
     procedenciaTipo: {
       type: String,

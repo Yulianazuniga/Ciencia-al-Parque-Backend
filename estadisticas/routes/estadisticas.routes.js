@@ -16,4 +16,5 @@ const router = Router();
  */
 router.get("/", verifyToken, controller.getSnapshot);
 
+
 export default router;
