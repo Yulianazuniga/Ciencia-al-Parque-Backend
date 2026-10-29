@@ -43,6 +43,8 @@
     <ul id="porDia"></ul>
     <h3>Por jornada</h3>
     <ul id="porJornada"></ul>
+    <h3>Por tipo de participación</h3>
+    <ul id="porParticipacion"></ul>
     <h3>Últimas horas</h3>
     <ul id="ultimaHora"></ul>
     <h3>Ganadores</h3>
@@ -63,6 +65,7 @@
           (document.getElementById(id).innerHTML = items.map((i) => `<li>${fmt(i)}</li>`).join(""));
         lista("porDia", data.porDia, (i) => `${i.fecha}: ${i.total}`);
         lista("porJornada", data.porJornada, (i) => `${i.clave}: ${i.total}`);
+        lista("porParticipacion", data.porParticipacion, (i) => `${i.tipo}: ${i.total}`);
         lista("ultimaHora", data.ultimaHora, (i) => `${i.hora}: ${i.total}`);
       };
 

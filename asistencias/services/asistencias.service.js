@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { timingSafeEqual } from "node:crypto";
 import { Participante, GENEROS, LUGARES_EVENTO, OPCIONES_PROCEDENCIA, ROLES_PARTICIPANTE, TIPOS_STAFF } from "../../models/Participante.js";
 import { Asistencia } from "../../models/Asistencia.js";
 import { appEvents, EVENTOS } from "../../libs/events.js";
 import { jornadaVigente } from "../../utils/tiempo.js";
 import { obtenerOCrearJornada } from "../../jornadas/services/jornadas.service.js";
 import { toCsv } from "../../utils/csv.js";
+import { STAFF_PASSWORD } from "../../config/token.js";
 
 export const participanteSchema = z.object({
   
@@ -31,7 +33,12 @@ export const verificarSchema = z.object({
 });
 
 export const createAsistenciaSchema = participanteSchema.partial().extend({
-  documento: participanteSchema.shape.documento
+  documento: participanteSchema.shape.documento,
+  staffPassword: z.string().max(200).optional()
+});
+
+export const staffClaveSchema = z.object({
+  password: z.string().min(1, "La contraseña es obligatoria").max(200)
 });
 
 
@@ -72,6 +79,27 @@ const snapshot = (origen) =>
   Object.fromEntries(CAMPOS_DATOS.map((campo) => [campo, origen[campo]]));
 
 const esDuplicado = (error) => error?.code === 11000;
+
+const clavesCoinciden = (ingresada, esperada) => {
+  const bufferIngresada = Buffer.from(ingresada);
+  const bufferEsperada = Buffer.from(esperada);
+  if (bufferIngresada.length !== bufferEsperada.length) return false;
+  return timingSafeEqual(bufferIngresada, bufferEsperada);
+};
+
+const esClaveStaffValida = (password) => {
+  if (!STAFF_PASSWORD || typeof password !== "string" || password === "") {
+    return false;
+  }
+  return clavesCoinciden(password, STAFF_PASSWORD);
+};
+
+export const verificarClaveStaff = async (password) => {
+  if (!esClaveStaffValida(password)) {
+    throw new Error("STAFF_PASSWORD_INVALIDA");
+  }
+  return { valido: true };
+};
 
 export const verificar = async (documento) => {
   const participante = await Participante.findOne({ documento });
@@ -122,6 +150,12 @@ export const registrar = async (body) => {
       participante: snapshot(participante)
     };
   }
+  if (body.rol === "Staff" && !esClaveStaffValida(body.staffPassword)) {
+    throw new Error(
+      body.staffPassword ? "STAFF_PASSWORD_INVALIDA" : "STAFF_PASSWORD_REQUERIDA"
+    );
+  }
+
   if (body.procedenciaTipo === "Otro" && (!body.procedenciaDetalle || body.procedenciaDetalle.trim() === "")) {
     const error = new Error("PROCEDENCIA_DETALLE_REQUERIDO");
     throw error;
@@ -144,8 +178,14 @@ export const registrar = async (body) => {
     throw error;
   }
 
+  const datosParticipante = { ...body };
+  delete datosParticipante.staffPassword;
+
   try {
-    participante = await Participante.create({ ...body, destacado: body.destacado ?? "" });
+    participante = await Participante.create({
+      ...datosParticipante,
+      destacado: datosParticipante.destacado ?? ""
+    });
   } catch (error) {
     if (!esDuplicado(error)) throw error;
     participante = await Participante.findOne({ documento: body.documento });

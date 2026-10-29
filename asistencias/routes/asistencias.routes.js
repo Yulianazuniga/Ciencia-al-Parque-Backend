@@ -3,11 +3,12 @@ import * as controller from "../controllers/asistencias.controller.js";
 import { validate } from "../../shared/middlewares/validateZod.js";
 import { verifyToken } from "../../shared/middlewares/verifyToken.js";
 import { verifyRole } from "../../shared/middlewares/verifyRole.js";
-import { asistenciaLimiter } from "../../shared/middlewares/rateLimit.js";
+import { asistenciaLimiter, staffClaveLimiter } from "../../shared/middlewares/rateLimit.js";
 import { ADMIN_ROLE } from "../../config/token.js";
 import {
   createAsistenciaSchema,
   listQuerySchema,
+  staffClaveSchema,
   verificarSchema
 } from "../services/asistencias.service.js";
 
@@ -32,6 +33,33 @@ const router = Router();
  *       200: { description: "{ existe, yaAsistioEnJornadaActual }" }
  */
 router.post("/verificar", asistenciaLimiter, validate(verificarSchema), controller.verificar);
+
+/**
+ * @openapi
+ * /api/asistencias/staff/validar:
+ *   post:
+ *     tags: [Asistencias]
+ *     summary: Valida la contraseña para registrarse como Staff
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [password]
+ *             properties:
+ *               password: { type: string, example: "clave-staff" }
+ *     responses:
+ *       200: { description: "{ valido: true }" }
+ *       403: { description: Contraseña de staff incorrecta }
+ *       429: { description: Demasiados intentos }
+ */
+router.post(
+  "/staff/validar",
+  staffClaveLimiter,
+  validate(staffClaveSchema),
+  controller.verificarClaveStaff
+);
 
 /**
  * @openapi

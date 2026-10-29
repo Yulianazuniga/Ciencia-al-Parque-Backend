@@ -9,6 +9,8 @@ export const REFRESH_TOKEN_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES || "7d";
 export const ADMIN_ROLE = process.env.ADMIN_ROLE || "ADMIN";
 export const PRESENTADOR_ROLE = process.env.PRESENTADOR_ROLE || "PRESENTADOR";
 
+export const STAFF_PASSWORD = process.env.STAFF_PASSWORD;
+
 export const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || "admin@evento.local";
 export const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "Cambiar123*";
 

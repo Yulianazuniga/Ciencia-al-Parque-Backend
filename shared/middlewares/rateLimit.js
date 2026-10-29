@@ -20,3 +20,9 @@ export const loginLimiter = buildLimiter({
   max: 10,
   message: "Demasiados intentos de inicio de sesión, intenta más tarde"
 });
+
+export const staffClaveLimiter = buildLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  message: "Demasiados intentos de contraseña de staff, intenta más tarde"
+});

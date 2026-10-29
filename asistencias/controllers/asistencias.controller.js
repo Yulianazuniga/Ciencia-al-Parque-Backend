@@ -15,6 +15,18 @@ export const registrar = async (req, res) => {
     const asistencia = await service.registrar(req.body);
     res.status(201).json({ asistencia });
   } catch (error) {
+    if (error.message === "STAFF_PASSWORD_REQUERIDA") {
+      return res.status(403).json({
+        message: "Debe ingresar la contraseña de staff para registrarse como Staff",
+        code: "STAFF_PASSWORD_REQUERIDA"
+      });
+    }
+    if (error.message === "STAFF_PASSWORD_INVALIDA") {
+      return res.status(403).json({
+        message: "Contraseña de staff incorrecta",
+        code: "STAFF_PASSWORD_INVALIDA"
+      });
+    }
     if (error.message === "DUPLICADO") {
       return res
         .status(409)
@@ -40,6 +52,20 @@ export const registrar = async (req, res) => {
 
 
 
+
+export const verificarClaveStaff = async (req, res) => {
+  try {
+    res.json(await service.verificarClaveStaff(req.body.password));
+  } catch (error) {
+    if (error.message === "STAFF_PASSWORD_INVALIDA") {
+      return res.status(403).json({
+        message: "Contraseña de staff incorrecta",
+        code: "STAFF_PASSWORD_INVALIDA"
+      });
+    }
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const getAll = async (req, res) => {
   try {

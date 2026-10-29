@@ -61,6 +61,16 @@ export const getSnapshot = async () => {
           },
           { $sort: { total: -1 } }
         ],
+        porParticipacion: [
+          { $match: { "datos.tipoStaff": { $type: "string", $ne: "" } } },
+          {
+            $group: {
+              _id: "$datos.tipoStaff",
+              total: { $sum: 1 }
+            }
+          },
+          { $sort: { total: -1 } }
+        ],
         porDia: [
           { $group: { _id: "$fecha", total: { $sum: 1 } } },
           { $sort: { _id: 1 } }
@@ -106,6 +116,35 @@ export const getSnapshot = async () => {
       recurrentes: 0
     };
 
+  const participacionStaff = {
+  conferencista:
+    data.porParticipacion?.find(
+      (x) => x._id === "Conferencista"
+    )?.total || 0,
+
+  ponenteAgendaAcademica:
+    data.porParticipacion?.find(
+      (x) => x._id === "Ponente agenda académica"
+    )?.total || 0,
+
+  expositorMuestras:
+    data.porParticipacion?.find(
+      (x) => x._id === "Expositor muestras interactivas"
+    )?.total || 0,
+
+  expositorColegios:
+    data.porParticipacion?.find(
+      (x) => x._id === "Expositor Colegios"
+    )?.total || 0,
+
+  organizacion:
+    data.porParticipacion?.find(
+      (x) => x._id === "Organización"
+    )?.total || 0
+};
+
+
+
   const totalAsistencias = contar(data.total);
   const totalPrimeraVez = contar(data.primeraVez);
   const calificacion = data.calificacion?.[0];
@@ -122,6 +161,11 @@ export const getSnapshot = async () => {
       municipio: item._id,
       total: item.total
     })),
+    porParticipacion: (data.porParticipacion || []).map((item) => ({
+      tipo: item._id,
+      total: item.total
+    })),
+     participacionStaff,
     asistentesUnicos: contar(data.unicos),
     totalAsistencias,
     nuevos: totalPrimeraVez,
