@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Participante, GENEROS, LUGARES_EVENTO, OPCIONES_PROCEDENCIA } from "../../models/Participante.js";
+import { Participante, GENEROS, LUGARES_EVENTO, OPCIONES_PROCEDENCIA, ROLES_PARTICIPANTE, TIPOS_STAFF } from "../../models/Participante.js";
 import { Asistencia } from "../../models/Asistencia.js";
 import { appEvents, EVENTOS } from "../../libs/events.js";
 import { jornadaVigente } from "../../utils/tiempo.js";
@@ -7,11 +7,13 @@ import { obtenerOCrearJornada } from "../../jornadas/services/jornadas.service.j
 import { toCsv } from "../../utils/csv.js";
 
 export const participanteSchema = z.object({
-  //--email: z.string().email("Debe ser un correo válido"),--//
+  
   documento: z.string().regex(/^\d{5,12}$/, "documento debe tener de 5 a 12 dígitos"),
   nombreCompleto: z.string().min(3).max(120),
   edad: z.coerce.number().int().min(1).max(120),
   genero: z.enum(GENEROS),
+  rol: z.enum(ROLES_PARTICIPANTE),
+  tipoStaff: z.enum(TIPOS_STAFF).optional(),
   telefono: z.string().regex(/^3\d{9}$/, "telefono debe ser un celular colombiano de 10 dígitos"),
   municipio: z.string().min(2, "Debe seleccionar un municipio").max(100),
   procedenciaTipo: z.enum(OPCIONES_PROCEDENCIA),
@@ -23,7 +25,7 @@ export const participanteSchema = z.object({
     errorMap: () => ({ message: "aceptaTratamientoDatos debe ser true" })
   })
 });
-
+  
 export const verificarSchema = z.object({
   documento: participanteSchema.shape.documento
 });
@@ -31,6 +33,7 @@ export const verificarSchema = z.object({
 export const createAsistenciaSchema = participanteSchema.partial().extend({
   documento: participanteSchema.shape.documento
 });
+
 
 export const listQuerySchema = z.object({
   jornada: z.string().optional(),
@@ -41,6 +44,8 @@ const CAMPOS_DATOS = [
   "documento",
   "nombreCompleto",
   "edad",
+  "rol",
+  "tipoStaff",
   "genero",
   "telefono",
   "municipio",
@@ -53,6 +58,7 @@ const CAMPOS_DATOS = [
 const CAMPOS_REQUERIDOS = [
   "nombreCompleto",
   "edad",
+  "rol",
   "genero",
   "telefono",
   "municipio",
@@ -120,6 +126,14 @@ export const registrar = async (body) => {
     const error = new Error("PROCEDENCIA_DETALLE_REQUERIDO");
     throw error;
   }
+  if (
+  body.rol === "Staff" &&
+  (!body.tipoStaff || body.tipoStaff.trim() === "")
+) {
+  const error = new Error("TIPO_STAFF_REQUERIDO");
+  throw error;
+}
+
 
   const faltantes = CAMPOS_REQUERIDOS.filter(
     (campo) => body[campo] === undefined || body[campo] === null
@@ -162,6 +176,8 @@ export const getAll = async ({ jornada, formato }) => {
         { label: "documento", value: (row) => row.documento },
         { label: "nombreCompleto", value: (row) => row.datos?.nombreCompleto },
         { label: "edad", value: (row) => row.datos?.edad },
+        { label: "rol", value: (row) => row.datos?.rol },
+        { label: "tipoStaff", value: (row) => row.datos?.tipoStaff },
         { label: "genero", value: (row) => row.datos?.genero },
         { label: "telefono", value: (row) => row.datos?.telefono },
         { label: "municipio", value: (row) => row.datos?.municipio },

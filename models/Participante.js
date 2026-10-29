@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { string } from "zod/v4";
 
 export const GENEROS = [
   "Masculino",
@@ -6,6 +7,18 @@ export const GENEROS = [
   "No binario",
   "Otro",
   "Prefiero no decirlo"
+];
+export const ROLES_PARTICIPANTE = [
+  "Publico",
+  "Staff"
+];
+
+export const TIPOS_STAFF = [
+  "Conferencista",
+  "Ponente agenda académica",
+  "Expositor muestras interactivas",
+  "Expositor Colegios",
+  "Organización"
 ];
 
 export const LUGARES_EVENTO = ["Timbío", "Santander de Quilichao", "Popayán"];
@@ -34,15 +47,32 @@ const participanteSchema = new mongoose.Schema(
       required: true,
       match: [/^3\d{9}$/, "telefono must be a 10 digit colombian cellphone"]
     },
-
+    rol: {
+    type: String,
+    required: true,
+    enum: ROLES_PARTICIPANTE
+   },
+ tipoStaff: {
+  type: String,
+  enum: TIPOS_STAFF,
+  validate: {
+    validator: function (value) {
+      if (this.rol === "Staff") {
+        return value != null && value.trim() !== "";
+      }
+      return true;
+    },
+    message: "Debe indicar su participación si es Staff"
+  }
+},
+    
     municipio:{
-      type: String,
+    type: String,
     required: true,
     trim: true,
     maxlength: 100
-  
-
     },
+
     procedenciaTipo: {
       type: String,
       required: true,
