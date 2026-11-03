@@ -18,7 +18,9 @@ export const TIPOS_STAFF = [
   "Ponente agenda académica",
   "Expositor muestras interactivas",
   "Expositor Colegios",
-  "Organización"
+  "Organización",
+  "Mentor",
+  "Evaluador"
 ];
 
 export const LUGARES_EVENTO = ["Timbío", "Santander de Quilichao", "Popayán"];
