@@ -18,7 +18,8 @@ const obtenerElegibles = async (jornadaIds, ganadores) => {
     {
       $match: {
         jornadaId: { $in: jornadaIds },
-        documento: { $nin: ganadores }
+        documento: { $nin: ganadores },
+        "datos.rol": { $ne: "Staff" }
       }
     },
     { $group: { _id: "$documento" } },
@@ -32,7 +33,8 @@ const sortearGanador = async (jornadaIds, ganadores) => {
     {
       $match: {
         jornadaId: { $in: jornadaIds },
-        documento: { $nin: ganadores }
+        documento: { $nin: ganadores },
+        "datos.rol": { $ne: "Staff" }
       }
     },
     {

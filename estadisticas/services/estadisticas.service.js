@@ -4,12 +4,14 @@ import { claveJornada, jornadaVigente } from "../../utils/tiempo.js";
 
 const HORAS_ULTIMA_VENTANA = 6;
 
+const ES_PUBLICO = { "datos.rol": { $ne: "Staff" } };
+const ES_STAFF = { "datos.rol": "Staff" };
+
 const contar = (facet) => facet?.[0]?.n || 0;
 
-export const getSnapshot = async () => {
-  const desde = new Date(Date.now() - HORAS_ULTIMA_VENTANA * 60 * 60 * 1000);
-
+const agregarPublico = async (desde) => {
   const [data] = await Asistencia.aggregate([
+    { $match: ES_PUBLICO },
     {
       $facet: {
         total: [{ $count: "n" }],
@@ -61,16 +63,6 @@ export const getSnapshot = async () => {
           },
           { $sort: { total: -1 } }
         ],
-        porParticipacion: [
-          { $match: { "datos.tipoStaff": { $type: "string", $ne: "" } } },
-          {
-            $group: {
-              _id: "$datos.tipoStaff",
-              total: { $sum: 1 }
-            }
-          },
-          { $sort: { total: -1 } }
-        ],
         porDia: [
           { $group: { _id: "$fecha", total: { $sum: 1 } } },
           { $sort: { _id: 1 } }
@@ -95,6 +87,69 @@ export const getSnapshot = async () => {
     }
   ]);
 
+  return data || {};
+};
+
+const agregarStaff = async () => {
+  const [data] = await Asistencia.aggregate([
+    { $match: ES_STAFF },
+    {
+      $facet: {
+        total: [{ $count: "n" }],
+        unicos: [{ $group: { _id: "$documento" } }, { $count: "n" }],
+        porJornada: [
+          {
+            $group: {
+              _id: { fecha: "$fecha", turno: "$turno" },
+              total: { $sum: 1 }
+            }
+          }
+        ],
+        porDia: [
+          { $group: { _id: "$fecha", total: { $sum: 1 } } },
+          { $sort: { _id: 1 } }
+        ],
+        porParticipacion: [
+          { $match: { "datos.tipoStaff": { $type: "string", $ne: "" } } },
+          {
+            $group: {
+              _id: "$datos.tipoStaff",
+              total: { $sum: 1 }
+            }
+          },
+          { $sort: { total: -1 } }
+        ]
+      }
+    }
+  ]);
+
+  return data || {};
+};
+
+const participacionStaffDesde = (porParticipacion) => ({
+  conferencista: porParticipacion?.find((x) => x._id === "Conferencista")?.total || 0,
+  ponenteAgendaAcademica:
+    porParticipacion?.find((x) => x._id === "Ponente agenda académica")?.total || 0,
+  expositorMuestras:
+    porParticipacion?.find((x) => x._id === "Expositor muestras interactivas")?.total || 0,
+  expositorColegios:
+    porParticipacion?.find((x) => x._id === "Expositor Colegios")?.total || 0,
+  organizacion: porParticipacion?.find((x) => x._id === "Organización")?.total || 0,
+  mentor: porParticipacion?.find((x) => x._id === "Mentor")?.total || 0,
+  evaluador: porParticipacion?.find((x) => x._id === "Evaluador")?.total || 0
+});
+
+const mapPorParticipacion = (porParticipacion) =>
+  (porParticipacion || []).map((item) => ({
+    tipo: item._id,
+    total: item.total
+  }));
+
+export const getSnapshot = async () => {
+  const desde = new Date(Date.now() - HORAS_ULTIMA_VENTANA * 60 * 60 * 1000);
+
+  const [data, staffData] = await Promise.all([agregarPublico(desde), agregarStaff()]);
+
   const porJornada = (data.porJornada || []).map((item) => ({
     clave: claveJornada(item._id.fecha, item._id.turno),
     fecha: item._id.fecha,
@@ -102,6 +157,13 @@ export const getSnapshot = async () => {
     total: item.total,
     primeraVez: item.primeraVez,
     recurrentes: item.total - item.primeraVez
+  }));
+
+  const porJornadaStaff = (staffData.porJornada || []).map((item) => ({
+    clave: claveJornada(item._id.fecha, item._id.turno),
+    fecha: item._id.fecha,
+    turno: item._id.turno,
+    total: item.total
   }));
 
   const vigente = jornadaVigente();
@@ -116,34 +178,8 @@ export const getSnapshot = async () => {
       recurrentes: 0
     };
 
-  const participacionStaff = {
-  conferencista:
-    data.porParticipacion?.find(
-      (x) => x._id === "Conferencista"
-    )?.total || 0,
-
-  ponenteAgendaAcademica:
-    data.porParticipacion?.find(
-      (x) => x._id === "Ponente agenda académica"
-    )?.total || 0,
-
-  expositorMuestras:
-    data.porParticipacion?.find(
-      (x) => x._id === "Expositor muestras interactivas"
-    )?.total || 0,
-
-  expositorColegios:
-    data.porParticipacion?.find(
-      (x) => x._id === "Expositor Colegios"
-    )?.total || 0,
-
-  organizacion:
-    data.porParticipacion?.find(
-      (x) => x._id === "Organización"
-    )?.total || 0
-};
-
-
+  const porParticipacion = mapPorParticipacion(staffData.porParticipacion);
+  const participacionStaff = participacionStaffDesde(staffData.porParticipacion);
 
   const totalAsistencias = contar(data.total);
   const totalPrimeraVez = contar(data.primeraVez);
@@ -161,11 +197,8 @@ export const getSnapshot = async () => {
       municipio: item._id,
       total: item.total
     })),
-    porParticipacion: (data.porParticipacion || []).map((item) => ({
-      tipo: item._id,
-      total: item.total
-    })),
-     participacionStaff,
+    porParticipacion,
+    participacionStaff,
     asistentesUnicos: contar(data.unicos),
     totalAsistencias,
     nuevos: totalPrimeraVez,
@@ -175,6 +208,21 @@ export const getSnapshot = async () => {
       : 0,
     calificacionVotos: calificacion ? calificacion.votos : 0,
     ultimaHora: (data.ultimaHora || []).map((item) => ({ hora: item._id, total: item.total })),
+    staff: {
+      asistentesUnicos: contar(staffData.unicos),
+      totalAsistencias: contar(staffData.total),
+      porDia: (staffData.porDia || []).map((item) => ({
+        fecha: item._id,
+        total: item.total
+      })),
+      porJornada: porJornadaStaff.map(({ clave, fecha, turno, total }) => ({
+        clave,
+        fecha,
+        turno,
+        total
+      })),
+      porParticipacion
+    },
     actualizadoEn: new Date().toISOString()
   };
 };

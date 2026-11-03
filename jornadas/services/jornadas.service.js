@@ -26,7 +26,10 @@ export const getActual = async () => {
   const jornada = await Jornada.findOne({ fecha: vigente.fecha, turno: vigente.turno });
   if (!jornada) return { ...vigente, existe: false, totalAsistentes: 0 };
 
-  const totalAsistentes = await Asistencia.countDocuments({ jornadaId: jornada._id });
+  const totalAsistentes = await Asistencia.countDocuments({
+    jornadaId: jornada._id,
+    "datos.rol": { $ne: "Staff" }
+  });
   return {
     id: jornada._id,
     fecha: jornada.fecha,
@@ -41,6 +44,7 @@ export const getActual = async () => {
 
 export const getConteos = async () => {
   const resultados = await Asistencia.aggregate([
+    { $match: { "datos.rol": { $ne: "Staff" } } },
     { $group: { _id: "$jornadaId", total: { $sum: 1 } } }
   ]);
   return new Map(resultados.map((item) => [item._id.toString(), item.total]));
