@@ -3,7 +3,6 @@ import * as controller from "../controllers/auth.controller.js";
 import { validate } from "../../shared/middlewares/validateZod.js";
 import { verifyToken } from "../../shared/middlewares/verifyToken.js";
 import { verifyRole } from "../../shared/middlewares/verifyRole.js";
-import { loginLimiter } from "../../shared/middlewares/rateLimit.js";
 import { ADMIN_ROLE } from "../../config/token.js";
 import { registerSchema, loginSchema, refreshSchema } from "../services/auth.service.js";
 
@@ -29,7 +28,7 @@ const router = Router();
  *       200: { description: Tokens y usuario }
  *       401: { description: Credenciales inválidas }
  */
-router.post("/login", loginLimiter, validate(loginSchema), controller.login);
+router.post("/login", validate(loginSchema), controller.login);
 
 /**
  * @openapi

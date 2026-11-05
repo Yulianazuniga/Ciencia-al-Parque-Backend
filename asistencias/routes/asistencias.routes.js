@@ -3,7 +3,6 @@ import * as controller from "../controllers/asistencias.controller.js";
 import { validate } from "../../shared/middlewares/validateZod.js";
 import { verifyToken } from "../../shared/middlewares/verifyToken.js";
 import { verifyRole } from "../../shared/middlewares/verifyRole.js";
-import { asistenciaLimiter, staffClaveLimiter } from "../../shared/middlewares/rateLimit.js";
 import { ADMIN_ROLE } from "../../config/token.js";
 import {
   createAsistenciaSchema,
@@ -32,7 +31,7 @@ const router = Router();
  *     responses:
  *       200: { description: "{ existe, yaAsistioEnJornadaActual }" }
  */
-router.post("/verificar", asistenciaLimiter, validate(verificarSchema), controller.verificar);
+router.post("/verificar", validate(verificarSchema), controller.verificar);
 
 /**
  * @openapi
@@ -52,11 +51,9 @@ router.post("/verificar", asistenciaLimiter, validate(verificarSchema), controll
  *     responses:
  *       200: { description: "{ valido: true }" }
  *       403: { description: Contraseña de staff incorrecta }
- *       429: { description: Demasiados intentos }
  */
 router.post(
   "/staff/validar",
-  staffClaveLimiter,
   validate(staffClaveSchema),
   controller.verificarClaveStaff
 );
@@ -108,7 +105,6 @@ router.post(
  */
 router.post(
   "/",
-  asistenciaLimiter,
   validate(createAsistenciaSchema, { status: 422 }),
   controller.registrar
 );

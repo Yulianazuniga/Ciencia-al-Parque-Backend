@@ -63,7 +63,7 @@ index.js  # bootstrap: connectDB + http server + Socket.IO (/stats)
 ### Autenticados (JWT)
 | Método | Ruta | Rol | Función |
 |---|---|---|---|
-| `POST` | `/api/auth/login` | público | access + refresh token (rate limit) |
+| `POST` | `/api/auth/login` | público | access + refresh token |
 | `POST` | `/api/auth/refresh` | público | Rota el refresh token |
 | `POST` | `/api/auth/logout` | auth | Invalida el refresh token |
 | `GET` | `/api/auth/me` | auth | Datos del usuario |
@@ -99,7 +99,7 @@ npm run check                       # syntax-check + eslint
 
 ## Seguridad
 
-- `helmet`, CORS restringido al frontend, rate limit en `/api/asistencias` y `/api/auth/login`.
+- `helmet`, CORS restringido al frontend.
 - Validación Zod en todos los bodies; contraseñas con `bcryptjs`.
 - Access token de 15 min; refresh token rotatorio (7 días) revocable e invalidable.
 - Habeas Data (Ley 1581): el formulario exige `aceptaTratamientoDatos: true`; los datos
