@@ -67,6 +67,20 @@ const agregarPublico = async (desde) => {
           { $group: { _id: "$fecha", total: { $sum: 1 } } },
           { $sort: { _id: 1 } }
         ],
+        porEdad: [
+          { $match: { "datos.edad": { $type: "number" } } },
+          { $sort: { createdAt: 1 } },
+          { $group: { _id: "$documento", edad: { $first: "$datos.edad" } } },
+          { $group: { _id: "$edad", total: { $sum: 1 } } },
+          { $sort: { _id: 1 } }
+        ],
+        porGenero: [
+          { $match: { "datos.genero": { $type: "string", $ne: "" } } },
+          { $sort: { createdAt: 1 } },
+          { $group: { _id: "$documento", genero: { $first: "$datos.genero" } } },
+          { $group: { _id: "$genero", total: { $sum: 1 } } },
+          { $sort: { total: -1 } }
+        ],
         ultimaHora: [
           { $match: { createdAt: { $gte: desde } } },
           {
@@ -189,6 +203,14 @@ export const getSnapshot = async () => {
     jornadaActual,
     porJornada: porJornada.map(({ clave, total }) => ({ clave, total })),
     porDia: (data.porDia || []).map((item) => ({ fecha: item._id, total: item.total })),
+    porEdad: (data.porEdad || []).map((item) => ({
+      edad: item._id,
+      total: item.total
+    })),
+    porGenero: (data.porGenero || []).map((item) => ({
+      genero: item._id,
+      total: item.total
+    })),
     porLugar: (data.porLugar || []).map((item) => ({
       lugar: item._id,
       total: item.total
